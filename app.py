@@ -19,7 +19,6 @@ key = os.getenv("COHERE_API_KEY")
 llm = ChatCohere(cohere_api_key=key)
 
 def wiki_node(state):
-    print("inside wiki")
     wiki = WikipediaAPIWrapper()
     user_chat = state["messages"][-1].content
     wiki_result = wiki.run(user_chat) 
@@ -29,15 +28,12 @@ def wiki_node(state):
     return {"messages" : response}
 
 def time_node(state):
-    print("inside time")
     python_tool = PythonREPL()
     user_chat = state["messages"][-1].content
     prompt_template = PromptTemplate.from_template(prompts["python code execution prompt"])
     prompt = prompt_template.invoke({"user_input": user_chat})
     response = llm.invoke(prompt)
-    print("code : ", response.content)
-    py_response = python_tool.run(response.content)
-    print(py_response)    
+    py_response = python_tool.run(response.content)    
     prompt_template = PromptTemplate.from_template(prompts["python result interpreter prompt"])
     prompt = prompt_template.invoke({"user_input": user_chat, "pyhton_result": py_response})
     response = llm.invoke(prompt)
@@ -65,7 +61,6 @@ graph = StateGraph(MessagesState)
 graph.add_node("wikipedia", wiki_node)
 graph.add_node("chatbot",chatbot)
 graph.add_node("time", time_node)
-
 
 graph.add_conditional_edges(START, decision_maker)
 graph.add_edge("time", END)
